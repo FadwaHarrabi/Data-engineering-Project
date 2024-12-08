@@ -35,14 +35,19 @@ def format_data(res):
     return data
 
 def stream_data():
+    from kafka import KafkaProducer
+    import time
+
     def custom_serializer(obj):
         if isinstance(obj, uuid.UUID):  # Convert UUID to a string
             return str(obj)
         raise TypeError(f"Type {type(obj)} not serializable")
-    
+
     res = get_data()
     formatted_res = format_data(res)
-    print(json.dumps(formatted_res, indent=3, default=custom_serializer))  # Pass the custom serializer
+    
+    producer = KafkaProducer(bootstrap_servers=['localhost:9092'], max_block_ms=5000)
+    producer.send('user_created', json.dumps(formatted_res, default=custom_serializer).encode('utf-8'))
 
 # Uncomment this block to enable the DAG functionality if running in Airflow
 # with DAG('user_automation',  # task ID
@@ -55,4 +60,4 @@ def stream_data():
 #     )
 
 # For standalone testing
-stream_data()
+# stream_data()
